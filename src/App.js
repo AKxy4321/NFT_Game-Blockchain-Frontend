@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
+import SelectCharacter from './index.js';
 import twitterLogo from './assets/twitter-logo.svg';
 
 // Constants
