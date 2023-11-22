@@ -44,7 +44,7 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         }, 5000);
       }
     } catch (error) {
-      console.error('Error attacking boss:', error);
+      alert('Error, Could not attack boss: ', error.message);
       setAttackState('');
     }
   };
@@ -64,8 +64,6 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         setCharacterNFT((prevState) => {
             return { ...prevState, hp: playerHp };
         });
-        
-        window.location.reload();
       }
       else {
         setBoss((prevState) => {
@@ -89,6 +87,7 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
   return () => {
       if (gameContract) {
           gameContract.off('AttackComplete', onAttackComplete);
+          window.location.reload();
       }
   }
   }, [gameContract]);
