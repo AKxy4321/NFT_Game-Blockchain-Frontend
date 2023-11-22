@@ -64,6 +64,8 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         setCharacterNFT((prevState) => {
             return { ...prevState, hp: playerHp };
         });
+        
+        window.location.reload();
       }
       else {
         setBoss((prevState) => {
