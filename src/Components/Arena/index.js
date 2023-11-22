@@ -56,12 +56,21 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         const attackTxn = await gameContract.attackBoss();
         await attackTxn.wait();
         console.log('attackTxn:', attackTxn);
-        setAttackState('hit');
-        setShowToast(true);
-        setTimeout(() => {
-          setShowToast(false);
-          window.location.reload();
-        }, 5000);
+  
+        const attackEvent = attackTxn.events.find(
+          (event) => event.event === 'AttackComplete'
+        );
+        if (attackEvent && attackEvent.args && attackEvent.args.newBossHp) {
+          const newBossHp = attackEvent.args.newBossHp.toNumber();
+          if (newBossHp < boss.hp) {
+            setAttackState('hit');
+            setShowToast(true);
+            setTimeout(() => {
+              setShowToast(false);
+              window.location.reload();
+            }, 5000);
+          }
+        }
       }
     } catch (error) {
       alert('Error, Could not attack boss: ', error.message);
