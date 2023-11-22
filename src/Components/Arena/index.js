@@ -138,6 +138,12 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
             <button className="cta-button" onClick={runAttackAction}>
               {`💥 Attack ${boss.name}`}
             </button>
+            {/* Revive Button */}
+          <div className="revive-container">
+            <button className="cta-button" onClick={reviveCharacter}>
+              Revive
+            </button>
+          </div>
           </div>
           {attackState === 'attacking' && (
             <div className="loading-indicator">
