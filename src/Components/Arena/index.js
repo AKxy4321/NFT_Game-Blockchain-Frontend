@@ -40,9 +40,10 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         console.log('reviveTxn:', reviveTxn);
         setAttackState('');
         setIsRevived(true);
+        alert("Revive Completed!");
       }
     } catch (error) {
-      alert('Error, Could not revive character: ', error.message);
+      alert('Error, Could not revive character: ', error);
       setAttackState('');
     }
   };
@@ -59,6 +60,7 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         setShowToast(true);
         setTimeout(() => {
           setShowToast(false);
+          window.location.reload();
         }, 5000);
       }
     } catch (error) {
@@ -67,50 +69,60 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
     }
   };
 
-    const onAttackComplete = (from, newBossHp, newPlayerHp) => {
-      const bossHp = newBossHp.toNumber();
-      const playerHp = newPlayerHp.toNumber();
-      const sender = from.toString();
-
-      console.log(`AttackComplete: Boss Hp: ${bossHp} Player Hp: ${playerHp}`);
-
-      if (currentAccount === sender.toLowerCase()) {
-        setBoss((prevState) => {
-          return { ...prevState, hp: bossHp };
-        });
-        if (!isRevived) {
-          // Only update the characterNFT hp if it is not revived
-          setCharacterNFT((prevState) => {
-            return { ...prevState, hp: playerHp };
-          });
-        }
-      } else {
-        setBoss((prevState) => {
-          return { ...prevState, hp: bossHp };
+  const onAttackComplete = async (from, newBossHp, newPlayerHp) => {
+    const bossHp = newBossHp.toNumber();
+    const playerHp = newPlayerHp.toNumber();
+    const sender = from.toString();
+  
+    console.log(`AttackComplete: Boss Hp: ${bossHp} Player Hp: ${playerHp}`);
+  
+    if (currentAccount === sender.toLowerCase()) {
+      setBoss((prevState) => {
+        return { ...prevState, hp: bossHp };
+      });
+      if (!isRevived) {
+        // Only update the characterNFT hp if it is not revived
+        setCharacterNFT((prevState) => {
+          return { ...prevState, hp: playerHp };
         });
       }
-      setIsRevived(false);
-  }
+    } else {
+      setBoss((prevState) => {
+        return { ...prevState, hp: bossHp };
+      });
+    }
+  
+    setIsRevived(false);
+  };
+
+  useEffect(() => {
+    if (isRevived) {
+      window.location.reload();
+    }
+  }, [isRevived]);
 
   useEffect(() => {
     const fetchBoss = async () => {
+      try {
         const bossTxn = await gameContract.getBigBoss();
         console.log('Boss:', bossTxn);
         setBoss(transformCharacterData(bossTxn));
+      } catch (error) {
+        console.error('Error fetching boss data:', error);
+      }
     };
-
+  
     if (gameContract) {
       fetchBoss();
       gameContract.on('AttackComplete', onAttackComplete);
     }
-
-  return () => {
+  
+    return () => {
       if (gameContract) {
-          gameContract.off('AttackComplete', onAttackComplete);
-          window.location.reload();
+        gameContract.off('AttackComplete', onAttackComplete);
       }
-  }
-  }, [gameContract]);
+    };
+  }, [gameContract, currentAccount, isRevived, setCharacterNFT]);
 
   return (
     <div className="arena-container">
@@ -137,13 +149,15 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
           <div className="attack-container">
             <button className="cta-button" onClick={runAttackAction}>
               {`💥 Attack ${boss.name}`}
-            </button>
-            {/* Revive Button */}
-          <div className="revive-container">
-            <button className="cta-button" onClick={reviveCharacter}>
-              Revive
-            </button>
-          </div>
+            </button><br></br><br></br>
+              {characterNFT && characterNFT.hp === 0 && (
+                <div className="revive-container">
+                  <button className="cta-button" onClick={reviveCharacter}>
+                    Revive
+                  </button>
+                </div>
+              )}
+
           </div>
           {attackState === 'attacking' && (
             <div className="loading-indicator">
@@ -154,7 +168,6 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         </div>
       )}
   
-      {/* Character NFT */}
       {characterNFT && (
         <div className="players-container">
           <div className="player-container">
