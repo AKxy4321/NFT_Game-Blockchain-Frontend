@@ -62,7 +62,7 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         );
         if (attackEvent && attackEvent.args && attackEvent.args.newBossHp) {
           const newBossHp = attackEvent.args.newBossHp.toNumber();
-          if (newBossHp < boss.hp) {
+          if (newBossHp !== boss.hp) {
             setAttackState('hit');
             setShowToast(true);
             setTimeout(() => {
@@ -73,7 +73,7 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         }
       }
     } catch (error) {
-      alert('Error, Could not attack boss: ', error.message);
+      alert('Error, Could not attack Boss');
       setAttackState('');
     }
   };
