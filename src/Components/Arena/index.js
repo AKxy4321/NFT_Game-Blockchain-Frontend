@@ -10,6 +10,7 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
   const [boss, setBoss] = useState(null);
   const [attackState, setAttackState] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [isRevived, setIsRevived] = useState(false);
 
   useEffect(() => {
     const { ethereum } = window;
@@ -28,6 +29,23 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
       console.log('Ethereum object not found');
     }
   }, []);
+
+  const reviveCharacter = async () => {
+    try {
+      if (gameContract) {
+        setAttackState('reviving');
+        console.log('Reviving character...');
+        const reviveTxn = await gameContract.reviveCharacter();
+        await reviveTxn.wait();
+        console.log('reviveTxn:', reviveTxn);
+        setAttackState('');
+        setIsRevived(true);
+      }
+    } catch (error) {
+      alert('Error, Could not revive character: ', error.message);
+      setAttackState('');
+    }
+  };
 
   const runAttackAction = async () => {
     try {
@@ -57,19 +75,21 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
       console.log(`AttackComplete: Boss Hp: ${bossHp} Player Hp: ${playerHp}`);
 
       if (currentAccount === sender.toLowerCase()) {
-
         setBoss((prevState) => {
-            return { ...prevState, hp: bossHp };
+          return { ...prevState, hp: bossHp };
         });
-        setCharacterNFT((prevState) => {
+        if (!isRevived) {
+          // Only update the characterNFT hp if it is not revived
+          setCharacterNFT((prevState) => {
             return { ...prevState, hp: playerHp };
-        });
-      }
-      else {
+          });
+        }
+      } else {
         setBoss((prevState) => {
-            return { ...prevState, hp: bossHp };
+          return { ...prevState, hp: bossHp };
         });
       }
+      setIsRevived(false);
   }
 
   useEffect(() => {
