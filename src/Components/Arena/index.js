@@ -77,7 +77,7 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
       } else if (error.message.includes("missed")) {
         alert('Attack missed the boss!');
       } else {
-        alert('Error, Could not attack Boss');
+        console.log(error);
       }
       setAttackState('');
     }
