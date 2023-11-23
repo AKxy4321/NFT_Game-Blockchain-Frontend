@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ethers } from 'ethers';
-import { CONTRACT_ADDRESS, transformCharacterData } from '../../constants';
+import { CONTRACT_ADDRESS, transformCharacterData } from '../../constants.js';
 import myEpicGame from '../../utils/MyEpicGame.json';
 import LoadingIndicator from '../LoadingIndicator/index.js';
 import './Arena.css';
