@@ -6,7 +6,7 @@ import { CONTRACT_ADDRESS, transformCharacterData } from './constants.js';
 import LoadingIndicator from './Components/LoadingIndicator/index.js';
 import Arena from './Components/Arena/index.js';
 import myEpicGame from './utils/MyEpicGame.json';
-import networks from './networks.json';
+import networks from './networks.js';
 
 const App = () => {
 
