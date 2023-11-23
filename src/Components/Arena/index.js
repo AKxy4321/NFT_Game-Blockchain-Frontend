@@ -53,22 +53,36 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
       if (gameContract) {
         setAttackState('attacking');
         console.log('Attacking boss...');
+
         const attackTxn = await gameContract.attackBoss();
         await attackTxn.wait();
         console.log('attackTxn:', attackTxn);
 
-        const attackEvent = attackTxn.events.find(
-          (event) => event.event === 'AttackComplete'
-        );
-        if (attackEvent && attackEvent.args && attackEvent.args.newBossHp) {
-          const newBossHp = attackEvent.args.newBossHp.toNumber();
-          if (newBossHp !== boss.hp) {
+        if (attackTxn) {
+          const prevPlayerHp = parseInt(attackTxn.events.find((event) => event.event === 'BeforeAttack').args.prevPlayerHp);
+          const currPlayerHp = parseInt(attackTxn.events.find((event) => event.event === 'AttackComplete').args.currPlayerHp);
+  
+          const prevBossHp = parseInt(attackTxn.events.find((event) => event.event === 'BeforeAttack').args.prevBossHp);
+          const currBossHp = parseInt(attackTxn.events.find((event) => event.event === 'AttackComplete').args.currBossHp);
+          if (prevBossHp !== currBossHp) {
             setAttackState('hit');
             setShowToast(true);
             setTimeout(() => {
               setShowToast(false);
-            }, 5000);
+              setBoss((prevState) => {
+                return { ...prevState, hp: currBossHp};
+              });
+            }, 5000); 
           }
+          if(currPlayerHp === 0) {
+            alert("Your character is dead! Please revive it!");
+          }
+          if (currPlayerHp != prevPlayerHp) {
+            setCharacterNFT((prevState) => {
+              return { ...prevState, hp: currPlayerHp};
+            });
+          }
+          setIsRevived(false);
         }
       }
     } catch (error) {
@@ -83,32 +97,6 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
     }
 
     window.location.reload();
-  };
-
-  const onAttackComplete = async (from, newBossHp, newPlayerHp) => {
-    const bossHp = newBossHp.toNumber();
-    const playerHp = newPlayerHp.toNumber();
-    const sender = from.toString();
-  
-    console.log(`AttackComplete: Boss Hp: ${bossHp} Player Hp: ${playerHp}`);
-  
-    if (currentAccount === sender.toLowerCase()) {
-      setBoss((prevState) => {
-        return { ...prevState, hp: bossHp };
-      });
-      if (!isRevived) {
-        // Only update the characterNFT hp if it is not revived
-        setCharacterNFT((prevState) => {
-          return { ...prevState, hp: playerHp };
-        });
-      }
-    } else {
-      setBoss((prevState) => {
-        return { ...prevState, hp: bossHp };
-      });
-    }
-  
-    setIsRevived(false);
   };
 
   useEffect(() => {
