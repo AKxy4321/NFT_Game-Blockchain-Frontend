@@ -9,7 +9,6 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
   const [gameContract, setGameContract] = useState(null);
   const [boss, setBoss] = useState(null);
   const [attackState, setAttackState] = useState('');
-  const [showToast, setShowToast] = useState(false);
   const [isRevived, setIsRevived] = useState(false);
 
   useEffect(() => {
@@ -30,6 +29,51 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
     }
   }, []);
 
+  const runAttackAction = async () => {
+    try {
+      if (gameContract) {
+        setAttackState('attacking');
+        console.log('Attacking boss...');
+        const attackTxn = await gameContract.attackBoss();
+        await attackTxn.wait();
+        console.log('attackTxn:', attackTxn);
+        setAttackState('hit');
+        setIsRevived(false);
+      }
+    } catch (error) {
+      if (error.message.includes("transaction failed")) {
+        alert('Transaction failed. Please try again.');
+        window.location.reload()
+        setAttackState('');
+      } 
+    }
+  };
+
+    const onAttackComplete = (from, currBossHp, currPlayerHp) => {
+      const bossHp = currBossHp.toNumber();
+      const playerHp = currPlayerHp.toNumber();
+      const sender = from.toString();
+
+      alert(`Attack Complete: Boss Hp: ${bossHp} Player Hp: ${playerHp}`);
+
+      if (currentAccount === sender.toLowerCase()) {
+
+        setBoss((prevState) => {
+            return { ...prevState, hp: bossHp };
+        });
+        setCharacterNFT((prevState) => {
+            return { ...prevState, hp: playerHp };
+        });
+      }
+      else {
+        setBoss((prevState) => {
+            return { ...prevState, hp: bossHp };
+        });
+      }
+
+      window.location.reload();
+  }
+
   const reviveCharacter = async () => {
     try {
       if (gameContract) {
@@ -48,56 +92,24 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
     }
   };
 
-  const runAttackAction = async () => {
-    try {
-      if (gameContract) {
-        setAttackState('attacking');
-        console.log('Attacking boss...');
+  useEffect(() => {
+    const fetchBoss = async () => {
+        const bossTxn = await gameContract.getBigBoss();
+        console.log('Boss:', bossTxn);
+        setBoss(transformCharacterData(bossTxn));
+    };
 
-        const attackTxn = await gameContract.attackBoss();
-        await attackTxn.wait();
-        console.log('attackTxn:', attackTxn);
-
-        if (attackTxn) {
-          const prevPlayerHp = parseInt(attackTxn.events.find((event) => event.event === 'BeforeAttack').args.prevPlayerHp);
-          const currPlayerHp = parseInt(attackTxn.events.find((event) => event.event === 'AttackComplete').args.currPlayerHp);
-  
-          const prevBossHp = parseInt(attackTxn.events.find((event) => event.event === 'BeforeAttack').args.prevBossHp);
-          const currBossHp = parseInt(attackTxn.events.find((event) => event.event === 'AttackComplete').args.currBossHp);
-          if (prevBossHp !== currBossHp) {
-            setAttackState('hit');
-            setShowToast(true);
-            setTimeout(() => {
-              setShowToast(false);
-              setBoss((prevState) => {
-                return { ...prevState, hp: currBossHp};
-              });
-            }, 5000); 
-          }
-          if(currPlayerHp === 0) {
-            alert("Your character is dead! Please revive it!");
-          }
-          if (currPlayerHp != prevPlayerHp) {
-            setCharacterNFT((prevState) => {
-              return { ...prevState, hp: currPlayerHp};
-            });
-          }
-          setIsRevived(false);
-        }
-      }
-    } catch (error) {
-      if (error.message.includes("transaction failed")) {
-        alert('Transaction failed. Please try again.');
-      } else if (error.message.includes("missed")) {
-        alert('Attack missed the boss!');
-      } else {
-        alert(error);
-      }
-      setAttackState('');
+    if (gameContract) {
+      fetchBoss();
+      gameContract.on('AttackComplete', onAttackComplete);
     }
 
-    window.location.reload();
-  };
+  return () => {
+      if (gameContract) {
+          gameContract.off('AttackComplete', onAttackComplete);
+      }
+  }
+  }, [gameContract]);
 
   useEffect(() => {
     if (isRevived) {
@@ -105,38 +117,8 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
     }
   }, [isRevived]);
 
-  useEffect(() => {
-    const fetchBoss = async () => {
-      try {
-        const bossTxn = await gameContract.getBigBoss();
-        console.log('Boss:', bossTxn);
-        setBoss(transformCharacterData(bossTxn));
-      } catch (error) {
-        console.error('Error fetching boss data:', error);
-      }
-    };
-  
-    if (gameContract) {
-      fetchBoss();
-      gameContract.on('AttackComplete', onAttackComplete);
-    }
-  
-    return () => {
-      if (gameContract) {
-        gameContract.off('AttackComplete', onAttackComplete);
-      }
-    };
-  }, [gameContract, currentAccount, isRevived, setCharacterNFT]);
-
   return (
-    <div className="arena-container">
-      {/* Add your toast HTML right here */}
-      {boss && characterNFT && (
-        <div id="toast" className={showToast ? 'show' : ''}>
-          <div id="desc">{`💥 ${boss.name} was hit for ${characterNFT.attackDamage}!`}</div>
-        </div>
-      )}
-  
+    <div className="arena-container"> 
       {/* Boss */}
       {boss && (
         <div className="boss-container">
@@ -161,7 +143,6 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
                   </button>
                 </div>
               )}
-
           </div>
           {attackState === 'attacking' && (
             <div className="loading-indicator">
@@ -172,6 +153,7 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         </div>
       )}
   
+      {/* Character NFT */}
       {characterNFT && (
         <div className="players-container">
           <div className="player-container">
