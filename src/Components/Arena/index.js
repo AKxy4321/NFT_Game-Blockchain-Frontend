@@ -67,7 +67,6 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
             setShowToast(true);
             setTimeout(() => {
               setShowToast(false);
-              window.location.reload();
             }, 5000);
           }
         }
@@ -82,6 +81,8 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
       }
       setAttackState('');
     }
+
+    window.location.reload();
   };
 
   const onAttackComplete = async (from, newBossHp, newPlayerHp) => {
