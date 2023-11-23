@@ -43,9 +43,10 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
     } catch (error) {
       if (error.message.includes("transaction failed")) {
         alert('Transaction failed. Please try again.');
-        window.location.reload()
         setAttackState('');
-      } 
+      } else {
+        console.error('Error during attack:', error);
+      }
     }
   };
 
