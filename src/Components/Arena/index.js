@@ -56,7 +56,7 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         const attackTxn = await gameContract.attackBoss();
         await attackTxn.wait();
         console.log('attackTxn:', attackTxn);
-  
+
         const attackEvent = attackTxn.events.find(
           (event) => event.event === 'AttackComplete'
         );
@@ -73,7 +73,13 @@ const Arena = ({ characterNFT, setCharacterNFT, currentAccount }) => {
         }
       }
     } catch (error) {
-      alert('Error, Could not attack Boss');
+      if (error.message.includes("transaction failed")) {
+        alert('Transaction failed. Please try again.');
+      } else if (error.message.includes("missed")) {
+        alert('Attack missed the boss!');
+      } else {
+        alert('Error, Could not attack Boss');
+      }
       setAttackState('');
     }
   };
